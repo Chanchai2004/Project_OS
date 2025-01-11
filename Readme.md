@@ -124,9 +124,20 @@ CREATE TABLE attendance (
     FOREIGN KEY (student_id) REFERENCES students(student_id),
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
 );
-![alt text](image-4.png)
 
-![alt text](1.jpg)
-![alt text](2.jpg)
-![alt text](3.jpg)
-![alt text](4.jpg)
+การต่อสาย RC522 RFID Module และ Buzzer กับ Raspberry Pi
+การต่อสาย RC522
+RC522 Pin	Raspberry Pi Pin (BCM)	Physical Pin	หมายเหตุ
+SDA	        GPIO 8	            Pin 24	SPI0 CS (Chip Select)
+SCK	        GPIO 11	            Pin 23	SPI0 SCK (Clock)
+MOSI	    GPIO 10	            Pin 19	SPI0 MOSI (Master Out)
+MISO	    GPIO 9	            Pin 21	SPI0 MISO (Master In)
+GND	        Ground (GND)        Pin 6	เชื่อมต่อ Ground
+RST	        GPIO 25	            Pin 22	Reset
+3.3V	    3.3V Power	        Pin 1	แหล่งจ่ายไฟ 3.3V
+
+
+การต่อสาย Buzzer
+Buzzer Pin	Raspberry Pi Pin (BCM)	Physical Pin	หมายเหตุ
++ (บวก)	    GPIO 21	    Pin 40	สัญญาณควบคุม
+- (ลบ)	    GND	        Pin 39	เชื่อมต่อกับ Ground
