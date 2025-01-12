@@ -1,5 +1,7 @@
 # ระบบจัดการการเช็คชื่อด้วย RFID บน Raspberry Pi
 
+VDO >>>> https://drive.google.com/file/d/1zvMX1VxE48uVO-xt54P8NTFb9XSdDjGL/view?usp=sharing
+
 โปรเจกต์นี้เป็นการพัฒนาและติดตั้งระบบการเช็คชื่อโดยใช้ RFID และ Raspberry Pi โดยระบบนี้สามารถบันทึกข้อมูลการเข้าชั้นเรียน ลงทะเบียนนักเรียนใหม่ และจัดการฐานข้อมูลทั้งหมดผ่านสคริปต์ Python
 
 ---
