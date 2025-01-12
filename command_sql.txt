@@ -1,0 +1,94 @@
+mysql -u root -p
+
+
+USE attendance_db;
+
+
+
+SELECT * FROM students;
+
+
+SELECT * FROM course_schedule;
+
+
+SELECT * FROM courses;
+
+
+SELECT * FROM student_courses;
+
+
+SELECT * FROM attendance;
+
+DESCRIBE attendance;
+
+DELETE FROM attendance;
+
+CREATE DATABASE IF NOT EXISTS attendance_db;
+
+
+DELETE FROM students WHERE student_id = 'B6738228';
+
+
+UPDATE course_schedule
+SET day_of_week = 'Sunday'
+WHERE schedule_id = 16;
+
+
+INSERT INTO student_courses (student_id, course_id) 
+VALUES ('B6738228', 'C005');
+
+
+INSERT INTO courses (course_id, course_name, teacher_name) VALUES
+('C001', 'Mathematics', 'Dr. Smith'),
+('C002', 'Physics', 'Dr. Johnson'),
+('C003', 'Chemistry', 'Dr. Brown'),
+('C004', 'English', 'Ms. Davis'),
+('C005', 'Computer Science', 'Mr. Wilson');
+
+
+INSERT INTO course_schedule (course_id, day_of_week, start_time, end_time) VALUES
+('C001', 'Monday', '23:00:00', '23:59:00'),
+('C001', 'Wednesday', '23:00:00', '23:59:00'),
+('C001', 'Friday', '23:00:00', '23:59:00'),
+
+('C002', 'Tuesday', '23:00:00', '23:59:00'),
+('C002', 'Thursday', '23:00:00', '23:59:00'),
+('C002', 'Saturday', '23:00:00', '23:59:00'),
+
+('C003', 'Monday', '23:00:00', '23:59:00'),
+('C003', 'Thursday', '23:00:00', '23:59:00'),
+('C003', 'Saturday', '23:00:00', '23:59:00'),
+
+('C004', 'Tuesday', '23:00:00', '23:59:00'),
+('C004', 'Friday', '23:00:00', '23:59:00'),
+
+('C005', 'Monday', '00:00:00', '23:59:00'),
+('C005', 'Wednesday', '23:00:00', '23:59:00'),
+('C005', 'Sunday', '23:00:00', '23:59:00');
+
+
+INSERT INTO course_schedule (course_id, day_of_week, start_time, end_time) VALUES
+('C001', 'Monday', '09:00:00', '11:00:00'),
+('C001', 'Wednesday', '09:00:00', '11:00:00'),
+('C001', 'Friday', '09:00:00', '11:00:00'),
+
+('C002', 'Tuesday', '13:00:00', '15:00:00'),
+('C002', 'Thursday', '13:00:00', '15:00:00'),
+('C002', 'Saturday', '13:00:00', '15:00:00'),
+
+('C003', 'Monday', '14:00:00', '16:00:00'),
+('C003', 'Thursday', '14:00:00', '16:00:00'),
+('C003', 'Saturday', '14:00:00', '16:00:00'),
+
+('C004', 'Tuesday', '10:00:00', '12:00:00'),
+('C004', 'Friday', '10:00:00', '12:00:00'),
+
+('C005', 'Monday', '14:00:00', '16:00:00'),
+('C005', 'Wednesday', '14:00:00', '16:00:00'),
+('C005', 'Sunday', '14:00:00', '16:00:00');
+
+UPDATE course_schedule
+SET day_of_week = 'Monday', start_time = '00:00:00', end_time = '23:00:00'
+WHERE schedule_id = 30;
+
+
