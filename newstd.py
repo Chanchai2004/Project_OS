@@ -2,7 +2,7 @@ import os
 import time as t
 import mysql.connector
 from mfrc522 import SimpleMFRC522
-
+import sqlite3
 # ตั้งค่า Reader
 reader = SimpleMFRC522()
 
@@ -14,6 +14,7 @@ def connect_to_db():
         password="os123",  # แก้ไขตามรหัสผ่านของฐานข้อมูลคุณ
         database="attendance_db"
     )
+
 
 def add_new_student():
     db = connect_to_db()
@@ -28,10 +29,18 @@ def add_new_student():
         print(f"RFID: {rfid}")
         print(f"Name: {name}")
 
-        # หากพบ RFID ตรงกับเงื่อนไข ให้หยุดการทำงานทันที
+        # หากพบ RFID Admin ให้หยุดทำงานทันที
         if rfid == "732749633633":
             print("RFID Admin detected. Switching to Admin mode.")
             return rfid
+        
+        # ตรวจสอบการลงทะเบียนซ้ำในตาราง students
+        cursor.execute("SELECT student_id, name FROM students WHERE rfid = %s", (rfid,))
+        existing_student = cursor.fetchone()
+        if existing_student:
+            existing_student_id, existing_student_name = existing_student
+            print(f"นักเรียน {existing_student_name} (ID: {existing_student_id}) ได้ลงทะเบียนแล้ว")
+            return
 
         # รับ student_id
         student_id = input("Enter student ID: ")
@@ -42,20 +51,24 @@ def add_new_student():
         db.commit()
         print(f"Student {name} (ID: {student_id}) added successfully!")
 
-        # ดึงข้อมูลวิชาจากตาราง courses
-        cursor.execute("SELECT course_id, course_name FROM courses")
-        courses = cursor.fetchall()
+        # ดึงข้อมูลตาราง course_schedules เพื่อแสดงคอร์ส
+        cursor.execute("""
+            SELECT c.course_id, cs.day_of_week, cs.start_time, cs.end_time
+            FROM course_schedule cs
+            JOIN courses c ON cs.course_id = c.course_id
+        """)
+        schedules = cursor.fetchall()
 
-        # แสดงรายการวิชา
+        # แสดงรายการคอร์สที่มี
         print("\nAvailable courses:")
         course_mapping = {}
-        for idx, course in enumerate(courses, start=1):
-            course_id, course_name = course
+        for idx, schedule in enumerate(schedules, start=1):
+            course_id, day_of_week, start_time, end_time = schedule
             course_mapping[idx] = course_id
-            print(f"{idx}. {course_name} ({course_id})")
+            print(f"{idx}. {course_id} - {day_of_week} ({start_time} - {end_time})")
         print("0. Finish selection")
 
-        # รับวิชาที่เลือก
+        # รับคอร์สที่ต้องการลงทะเบียน
         selected_courses = []
         while True:
             try:
@@ -64,14 +77,17 @@ def add_new_student():
                     break
                 if choice in course_mapping:
                     selected_courses.append(course_mapping[choice])
-                    print(f"Course {course_mapping[choice]} added to student.")
+                    course_id = course_mapping[choice]
+                    print(f"Course {course_id} added to student.")
                 else:
                     print("Invalid choice. Please try again.")
             except ValueError:
                 print("Invalid input. Please enter a number.")
 
         # เพิ่มข้อมูลการเชื่อมโยงนักเรียนและวิชาลงใน student_courses
-        sql_insert_student_course = "INSERT INTO student_courses (student_id, course_id) VALUES (%s, %s)"
+        sql_insert_student_course = """
+            INSERT INTO student_courses (student_id, course_id) VALUES (%s, %s)
+        """
         for course_id in selected_courses:
             cursor.execute(sql_insert_student_course, (student_id, course_id))
         db.commit()
@@ -83,31 +99,9 @@ def add_new_student():
         cursor.close()
         db.close()
 
-def dump_database():
-    """Dump the database and save to USB Flash Drive"""
-    try:
-        usb_mount_path = "/media/os/ESD-USB"
-        if not os.path.exists(usb_mount_path):
-            print("USB Flash Drive not found. Please insert the drive.")
-            return
 
-        now = t.strftime("%Y%m%d_%H%M%S")
-        dump_file_path = os.path.join(usb_mount_path, f"attendance_db_{now}.sql")
 
-        dump_command = [
-            "mysqldump",
-            "-u", "root",
-            "--password=os123",
-            "attendance_db"
-        ]
 
-        with open(dump_file_path, "w") as dump_file:
-            os.system(" ".join(dump_command))
-
-        print(f"Database dumped successfully to {dump_file_path}")
-
-    except Exception as e:
-        print("Failed to dump database:", e)
 
 def main_loop():
     try:
@@ -117,20 +111,28 @@ def main_loop():
             if rfid == "732749633633":
                 while True:
                     print("\n--- Admin Menu ---")
-                    print("1. Run attend.py")
-                    print("2. Run newstd.py")
+                    print("1. Run Attendance")
+                    print("2. Run Add New Students")
                     print("3. Dump database to USB Flash Drive")
+                    print("4. Reset Database")
+                    print("5. Upload New Database")
                     print("0. Exit Program")
                     choice = input("Enter your choice: ")
                     if choice == "1":
-                        print("Running attend.py...")
+                        print("Running Attendence...")
                         os.system("python3 attend.py")
                     elif choice == "2":
-                        print("Running newstd.py...")
-                        os.system("python3 newstd.py")
+                        print("Running Add New Students...")
+                        add_new_student()
                     elif choice == "3":
-                        print("Dumping database...")
-                        dump_database()
+                        print("Dumping Database...")
+                        os.system("python3 dumpdb.py")
+                    elif choice == "4":
+                        print("Running Reset...")
+                        os.system("python3 reset.py")
+                    elif choice == "5":
+                        print("Running Upload...")
+                        os.system("python3 upload.py")
                     elif choice == "0":
                         print("Exiting program.")
                         return
@@ -145,3 +147,6 @@ def main_loop():
 
 # เรียกใช้โปรแกรมหลัก
 main_loop()
+
+
+                    
