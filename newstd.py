@@ -51,21 +51,17 @@ def add_new_student():
         db.commit()
         print(f"Student {name} (ID: {student_id}) added successfully!")
 
-        # ดึงข้อมูลตาราง course_schedules เพื่อแสดงคอร์ส
-        cursor.execute("""
-            SELECT c.course_id, cs.day_of_week, cs.start_time, cs.end_time
-            FROM course_schedule cs
-            JOIN courses c ON cs.course_id = c.course_id
-        """)
-        schedules = cursor.fetchall()
+        # ดึงข้อมูลจากตาราง courses เพื่อแสดงรหัสและชื่อวิชา
+        cursor.execute("SELECT course_id, course_name FROM courses")
+        courses = cursor.fetchall()
 
         # แสดงรายการคอร์สที่มี
         print("\nAvailable courses:")
         course_mapping = {}
-        for idx, schedule in enumerate(schedules, start=1):
-            course_id, day_of_week, start_time, end_time = schedule
+        for idx, course in enumerate(courses, start=1):
+            course_id, course_name = course
             course_mapping[idx] = course_id
-            print(f"{idx}. {course_id} - {day_of_week} ({start_time} - {end_time})")
+            print(f"{idx}. {course_id} - {course_name}")
         print("0. Finish selection")
 
         # รับคอร์สที่ต้องการลงทะเบียน
