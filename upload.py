@@ -1,23 +1,7 @@
 import os
-import mysql.connector
 import subprocess
-
-# ฟังก์ชันสำหรับเชื่อมต่อ MySQL Database
-def connect_to_mysql_db(user, password):
-    return mysql.connector.connect(
-        host="localhost",
-        user=user,
-        password=password,
-        database="attendance_db"
-    )
-
-# ฟังก์ชันสำหรับค้นหาไฟล์ .sql ใน Flash Drive
-def find_sql_files(flash_drive_path):
-    if not os.path.exists(flash_drive_path):
-        print("Flash drive not found. Please insert the drive.")
-        return []
-
-    return [f for f in os.listdir(flash_drive_path) if f.endswith(".sql")]
+import tkinter as tk
+from tkinter import messagebox, filedialog
 
 # ฟังก์ชันสำหรับอัปโหลดไฟล์ SQL เข้าสู่ MySQL
 def upload_sql_to_mysql(sql_file, mysql_user, mysql_password):
@@ -28,47 +12,57 @@ def upload_sql_to_mysql(sql_file, mysql_user, mysql_password):
         result = subprocess.run(command, shell=True)
 
         if result.returncode == 0:
-            print(f"Database successfully restored from {sql_file}")
+            messagebox.showinfo("Success", f"กู้คืนฐานข้อมูลสำเร็จจาก {sql_file}")
         else:
-            print(f"Error restoring database from {sql_file}. Return code: {result.returncode}")
+            messagebox.showerror("Error", f"เกิดข้อผิดพลาดในการกู้คืนฐานข้อมูล\nReturn code: {result.returncode}")
     except Exception as e:
-        print(f"Error uploading SQL file: {e}")
+        messagebox.showerror("Error", f"เกิดข้อผิดพลาดในการอัปโหลดไฟล์ SQL:\n{e}")
 
-# Main Function
-def main():
-    flash_drive_path = "/media/os/ESD-USB"
-    sql_files = find_sql_files(flash_drive_path)
-
-    if not sql_files:
-        print("No .sql files found on the flash drive.")
+# ฟังก์ชันสำหรับเรียกอัปโหลด SQL
+def on_upload_sql():
+    # เปิดหน้าต่างให้เลือกไฟล์ .sql
+    sql_file = filedialog.askopenfilename(
+        title="เลือกไฟล์ .sql สำหรับกู้คืน",
+        filetypes=[("SQL Files", "*.sql")]
+    )
+    if not sql_file:
+        messagebox.showerror("Error", "ไม่ได้เลือกไฟล์ .sql")
         return
 
-    print("\nAvailable .sql files:")
-    for idx, file in enumerate(sql_files, start=1):
-        print(f"{idx}. {file}")
-    print("0. Exit")
+    # ขอข้อมูล MySQL User และ Password
+    mysql_user = user_entry.get()
+    mysql_password = password_entry.get()
 
-    while True:
-        try:
-            choice = int(input("Select a file by number (or 0 to exit): "))
-            if choice == 0:
-                print("Exiting...")
-                return
-            if 1 <= choice <= len(sql_files):
-                selected_file = os.path.join(flash_drive_path, sql_files[choice - 1])
-                print(f"Selected file: {selected_file}")
-                break
-            else:
-                print("Invalid choice. Please try again.")
-        except ValueError:
-            print("Invalid input. Please enter a number.")
-
-    # รับข้อมูล User และ Password สำหรับ MySQL
-    mysql_user = input("Enter MySQL username: ")
-    mysql_password = input("Enter MySQL password: ")
+    if not mysql_user or not mysql_password:
+        messagebox.showerror("Error", "กรุณากรอกข้อมูล MySQL username และ password")
+        return
 
     # นำเข้าไฟล์ SQL เข้าสู่ฐานข้อมูล
-    upload_sql_to_mysql(selected_file, mysql_user, mysql_password)
+    upload_sql_to_mysql(sql_file, mysql_user, mysql_password)
 
-if __name__ == "__main__":
-    main()
+    # ปิดโปรแกรมหลังจากเสร็จสิ้น
+    root.destroy()
+
+# UI Components
+root = tk.Tk()
+root.title("Upload SQL File to Restore Database")
+root.geometry("500x300")
+
+# Label สำหรับกรอกข้อมูล MySQL User
+user_label = tk.Label(root, text="MySQL Username:", font=("Arial", 12))
+user_label.pack(pady=5)
+user_entry = tk.Entry(root, font=("Arial", 12))
+user_entry.pack(pady=5)
+
+# Label สำหรับกรอกข้อมูล MySQL Password
+password_label = tk.Label(root, text="MySQL Password:", font=("Arial", 12))
+password_label.pack(pady=5)
+password_entry = tk.Entry(root, font=("Arial", 12), show="*")
+password_entry.pack(pady=5)
+
+# ปุ่มสำหรับอัปโหลด SQL
+upload_button = tk.Button(root, text="Upload SQL File", font=("Arial", 12), command=on_upload_sql)
+upload_button.pack(pady=20)
+
+# เริ่มต้น UI
+root.mainloop()

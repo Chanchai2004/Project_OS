@@ -25,12 +25,14 @@ def add_new_student():
         print("Place your card to register")
         id, text = reader.read()
         rfid = str(id).strip()
+        rfid2 = str(reader.read()[0])
         name = text.strip()
         print(f"RFID: {rfid}")
         print(f"Name: {name}")
+        print(f"Name:>>>>>> {rfid2}")
 
         # หากพบ RFID Admin ให้หยุดทำงานทันที
-        if rfid == "732749633633":
+        if rfid == "664667101308":
             print("RFID Admin detected. Switching to Admin mode.")
             return rfid
         

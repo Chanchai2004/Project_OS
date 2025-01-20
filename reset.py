@@ -2,6 +2,8 @@ import os
 import time as t
 import mysql.connector
 from mfrc522 import SimpleMFRC522
+import tkinter as tk
+from tkinter import messagebox
 
 # ตั้งค่า Reader
 reader = SimpleMFRC522()
@@ -15,105 +17,65 @@ def connect_to_db():
         database="attendance_db"
     )
 
+# ฟังก์ชันสำหรับรีเซ็ตฐานข้อมูล
 def reset_database():
     db = connect_to_db()
     cursor = db.cursor()
 
-    print("Place your card to Authentication")
-    id, text = reader.read()
-    rfid = str(id).strip()
+    try:
+        # อ่านข้อมูล RFID สำหรับยืนยัน
+        messagebox.showinfo("Authentication", "กรุณาวางบัตรเจ้าหน้าที่เพื่อยืนยันการรีเซ็ตฐานข้อมูล")
+        id, text = reader.read()
+        rfid = str(id).strip()
 
-    if rfid == "732749633633":
-        try:
-            print("Resetting database...")
+        # ตรวจสอบว่า RFID ตรงกับรหัสที่กำหนด
+        if rfid == "732749633633":
+            messagebox.showinfo("Processing", "กำลังสำรองและรีเซ็ตฐานข้อมูล...")
 
-            # Save database ??????
-            dump_database()
-
-            # ????????????? Foreign Key Constraints ????????
+            # ปิด Foreign Key Constraints
             cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
 
-            # ???????????????? attendance
+            # ลบข้อมูลในแต่ละตาราง
             cursor.execute("DELETE FROM attendance")
-            print("Cleared attendance table.")
-
-            # ???????????????? student_courses
             cursor.execute("DELETE FROM student_courses")
-            print("Cleared student_courses table.")
-
-            # ???????????????? course_schedules
             cursor.execute("DELETE FROM course_schedule")
-            print("Cleared course_schedule table.")
-
-            # ???????????????? courses
             cursor.execute("DELETE FROM courses")
-            print("Cleared courses table.")
-
-            # ???????????????? students ??????? rfid = '732749633633'
             cursor.execute("DELETE FROM students")
-            print("Cleared students table.")
 
-            # ?????????????? Foreign Key Constraints ????????
+            # เปิด Foreign Key Constraints
             cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
-            # ?????????????????
+            # Commit การเปลี่ยนแปลง
             db.commit()
-            print("Database reset successfully.")
-            print(" ")
-            print("Task completed successfully.")
-
-        except mysql.connector.Error as err:
-            print(f"Database error: {err}")
-        finally:
-            cursor.close()
-            db.close()
-    else:
-        print(" ")
-        print("Authentication failed.")
-
-
-
-
-# ฟังก์ชันสำหรับสำรองฐานข้อมูล
-def dump_database():
-    """ฟังก์ชันสำหรับสำรองฐานข้อมูล MySQL เป็นไฟล์ .sql บน USB Flash Drive"""
-    try:
-        # ตรวจสอบ USB Mount
-        usb_mount_path = "/media/os/ESD-USB"
-        if not os.path.exists(usb_mount_path):
-            print("USB Flash Drive not found. Please insert the drive.")
-            return
-
-        # สร้างชื่อไฟล์ .sql
-        now = t.strftime("%Y%m%d_%H%M%S")
-        dump_file_path = os.path.join(usb_mount_path, f"attendance_db_{now}.sql")
-
-        # ใช้คำสั่ง mysqldump เพื่อสำรองข้อมูล
-        dump_command = f"mysqldump -u root --password=os123 attendance_db > {dump_file_path}"
-
-        print(f"Running dump command: {dump_command}")
-        result = os.system(dump_command)
-
-        # ตรวจสอบว่าไฟล์ถูกสร้างขึ้นสำเร็จหรือไม่
-        if result == 0 and os.path.exists(dump_file_path):
-            print(f"Database dumped successfully to {dump_file_path}")
+            messagebox.showinfo("Success", "รีเซ็ตฐานข้อมูลสำเร็จ!")
         else:
-            print("Failed to create the dump file. Please check your mysqldump configuration.")
+            messagebox.showerror("Error", "การยืนยันล้มเหลว กรุณาลองใหม่อีกครั้ง")
 
+    except mysql.connector.Error as err:
+        messagebox.showerror("Database Error", f"เกิดข้อผิดพลาด: {err}")
     except Exception as e:
-        print("Failed to dump database:", e)
-
-def main():
-    try:
-        print("Starting automatic task...")
-        # เรียกฟังก์ชันที่ต้องการทำงาน
-        reset_database()  # เปลี่ยนเป็นฟังก์ชันอื่นได้ เช่น reset_database()
-        
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
     finally:
-        print("Program terminated.")
+        cursor.close()
+        db.close()
 
-# เรียกใช้โปรแกรมหลัก
-if __name__ == "__main__":
-    main()
+# ฟังก์ชันสำหรับเริ่มกระบวนการรีเซ็ต
+def on_reset():
+    reset_database()
+    root.destroy()  # ปิดหน้าต่างหลังจากเสร็จสิ้น
+
+# UI Components
+root = tk.Tk()
+root.title("Reset Database")
+root.geometry("400x200")
+
+# Label อธิบายการทำงาน
+info_label = tk.Label(root, text="คลิกปุ่มด้านล่างเพื่อรีเซ็ตฐานข้อมูล", font=("Arial", 12))
+info_label.pack(pady=20)
+
+# ปุ่มสำหรับเริ่มกระบวนการรีเซ็ต
+reset_button = tk.Button(root, text="Reset Database", font=("Arial", 12), command=on_reset)
+reset_button.pack(pady=20)
+
+# เริ่มต้น UI
+root.mainloop()
